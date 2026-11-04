@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f7f7fb">
+  <meta name="description" content="MiWaifu2x: interfaz para preparar imágenes y previsualizar ajustes.">
+  <title>MiWaifu2x — Mejora tus imágenes</title>
+  <style>
+    :root{--ink:#242331;--muted:#777789;--line:#e8e7ef;--purple:#7257d8;--purple2:#5940bd;--bg:#f7f7fb;--card:#fff;--soft:#f1effb}
+    *{box-sizing:border-box} body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif}
+    a{color:inherit;text-decoration:none}.top{height:68px;background:#fff;border-bottom:1px solid var(--line);display:flex;align-items:center}
+    .nav{max-width:1080px;width:calc(100% - 40px);margin:auto;display:flex;align-items:center;justify-content:space-between}
+    .brand{font-weight:800;font-size:21px;letter-spacing:-.7px}.brand b{color:var(--purple)}.nav small{color:var(--muted)}
+    main{max-width:920px;width:calc(100% - 32px);margin:46px auto 70px}
+    .intro{text-align:center;margin-bottom:30px}.intro h1{font-size:clamp(28px,5vw,40px);line-height:1.15;margin:0 0 10px;letter-spacing:-1.3px}.intro p{margin:0;color:var(--muted)}
+    .panel{background:var(--card);border:1px solid var(--line);border-radius:16px;box-shadow:0 10px 35px #2820440a;padding:24px}
+    .upload{border:2px dashed #d8d2f2;background:#fbfaff;border-radius:13px;min-height:190px;display:flex;align-items:center;justify-content:center;text-align:center;padding:22px;cursor:pointer;transition:.2s}
+    .upload:hover,.upload.drag{border-color:var(--purple);background:#f6f3ff}.upload-icon{width:48px;height:48px;border-radius:14px;background:var(--soft);display:grid;place-items:center;margin:0 auto 12px;color:var(--purple);font-size:24px}
+    .upload strong{display:block;font-size:17px}.upload span{color:var(--muted);font-size:13px}.browse{display:inline-block;margin-top:12px;background:var(--purple);color:#fff;border-radius:8px;padding:9px 17px;font-weight:650}
+    input[type=file]{display:none}.urlrow{display:flex;gap:9px;margin-top:15px}.urlrow input{flex:1;min-width:0}
+    input[type=text],select{width:100%;border:1px solid var(--line);border-radius:8px;padding:11px 12px;background:white;color:var(--ink);font:inherit;outline:none}
+    input:focus,select:focus{border-color:var(--purple);box-shadow:0 0 0 3px #7257d81a}
+    .section-title{font-weight:750;margin:25px 0 13px}.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:15px}.field label{display:block;font-size:13px;font-weight:700;margin-bottom:7px}.hint{font-size:12px;color:var(--muted);margin-top:5px}
+    .actions{display:flex;align-items:center;gap:12px;margin-top:23px}.primary,.secondary{border:0;border-radius:9px;padding:12px 18px;font:inherit;font-weight:700;cursor:pointer}.primary{background:var(--purple);color:#fff;flex:1}.primary:hover{background:var(--purple2)}.secondary{background:#f0eff5;color:#4b4960}.primary:disabled{opacity:.45;cursor:not-allowed}
+    .notice{font-size:12px;color:var(--muted);margin-top:15px}.result{display:none;margin-top:22px;border-top:1px solid var(--line);padding-top:20px}.result.show{display:block}.preview{max-width:100%;max-height:440px;display:block;margin:14px auto;border-radius:10px;object-fit:contain;background:#f5f5f7}.status{color:var(--purple);font-size:13px;font-weight:650}
+    footer{text-align:center;color:var(--muted);font-size:12px;padding:0 20px 30px}
+    @media(max-width:640px){main{margin-top:30px}.panel{padding:16px}.grid{grid-template-columns:1fr}.urlrow{flex-direction:column}.actions{flex-direction:column}.primary,.secondary{width:100%}.nav small{display:none}}
+  </style>
+</head>
+<body>
+<header class="top"><div class="nav"><a class="brand" href="./">Mi<b>Waifu2x</b></a><small>Herramienta de imágenes · Español</small></div></header>
+<main>
+  <section class="intro"><h1>Mejora tus imágenes</h1><p>Prepara una imagen y configura las opciones de salida en un solo lugar.</p></section>
+  <section class="panel">
+    <label class="upload" id="dropzone" for="fileInput">
+      <span><span class="upload-icon">⇧</span><strong>Arrastra una imagen aquí</strong><span>o selecciona un archivo de tu dispositivo</span><br><span class="browse">Elegir imagen</span><br><span>PNG, JPG, WEBP · Solo vista previa local</span></span>
+    </label>
+    <input id="fileInput" type="file" accept="image/png,image/jpeg,image/webp,image/gif">
+    <div class="urlrow"><input id="imageUrl" type="text" placeholder="O pega la URL de una imagen (https://...)"><button class="secondary" id="loadUrl">Cargar URL</button></div>
+
+    <div class="section-title">Configuración</div>
+    <div class="grid">
+      <div class="field"><label for="style">Tipo de imagen</label><select id="style"><option>Ilustración</option><option>Ilustración / Escaneo</option><option>Fotografía</option></select></div>
+      <div class="field"><label for="noise">Reducción de ruido</label><select id="noise"><option>Ninguna</option><option>Baja</option><option selected>Media</option><option>Alta</option><option>Máxima</option></select></div>
+      <div class="field"><label for="scale">Aumento de resolución</label><select id="scale"><option>Sin aumento</option><option>1,6×</option><option selected>2×</option><option>4×</option></select></div>
+      <div class="field"><label for="format">Formato de salida</label><select id="format"><option>PNG</option><option>WEBP</option></select></div>
+    </div>
+    <div class="actions"><button class="primary" id="previewBtn" disabled>Preparar vista previa</button><button class="secondary" id="resetBtn">Restablecer</button></div>
+    <p class="notice">Esta versión es una réplica visual: permite cargar, previsualizar y descargar la imagen original. Los ajustes se muestran en la interfaz, pero todavía no aplican mejora por IA ni escalado real.</p>
+    <div class="result" id="result"><div class="status" id="status">Imagen lista.</div><img class="preview" id="preview" alt="Vista previa de la imagen"><div style="text-align:center"><a class="browse" id="download" download="miwaifu2x.png">Descargar imagen</a></div></div>
+  </section>
+</main>
+<footer>MiWaifu2x · Proyecto de demostración independiente. No está afiliado a Waifu2x.</footer>
+<script>
+(() => {
+  const fileInput=document.getElementById('fileInput'), drop=document.getElementById('dropzone');
+  const previewBtn=document.getElementById('previewBtn'), preview=document.getElementById('preview');
+  const result=document.getElementById('result'), status=document.getElementById('status'), download=document.getElementById('download');
+  let currentUrl=null, currentName='imagen';
+  function useFile(file){
+    if(!file || !file.type.startsWith('image/')){alert('Selecciona un archivo de imagen válido.');return;}
+    if(currentUrl) URL.revokeObjectURL(currentUrl);
+    currentUrl=URL.createObjectURL(file); currentName=file.name.replace(/\.[^.]+$/,'')||'imagen';
+    preview.src=currentUrl; previewBtn.disabled=false; result.classList.remove('show');
+  }
+  fileInput.addEventListener('change',e=>useFile(e.target.files[0]));
+  ['dragenter','dragover'].forEach(ev=>drop.addEventListener(ev,e=>{e.preventDefault();drop.classList.add('drag')}));
+  ['dragleave','drop'].forEach(ev=>drop.addEventListener(ev,e=>{e.preventDefault();drop.classList.remove('drag')}));
+  drop.addEventListener('drop',e=>useFile(e.dataTransfer.files[0]));
+  document.getElementById('loadUrl').addEventListener('click',()=>{
+    const url=document.getElementById('imageUrl').value.trim();
+    if(!/^https?:\/\//i.test(url)){alert('Introduce una URL que empiece por http:// o https://');return;}
+    preview.crossOrigin='anonymous'; preview.onload=()=>{currentUrl=url;currentName='imagen';previewBtn.disabled=false;result.classList.remove('show')};
+    preview.onerror=()=>alert('No se pudo cargar la imagen. El servidor puede bloquear la carga externa (CORS).');
+    preview.src=url;
+  });
+  previewBtn.addEventListener('click',()=>{
+    if(!preview.src)return;
+    const fmt=document.getElementById('format').value.toLowerCase();
+    if(currentUrl.startsWith('blob:')){
+      fetch(currentUrl).then(r=>r.blob()).then(blob=>{
+        const out=URL.createObjectURL(blob); download.href=out; download.download=currentName+'.'+(fmt==='webp'?'webp':'png');
+        if(fmt==='webp'){
+          const img=new Image();img.onload=()=>{const c=document.createElement('canvas');c.width=img.naturalWidth;c.height=img.naturalHeight;c.getContext('2d').drawImage(img,0,0);c.toBlob(b=>{const u=URL.createObjectURL(b);download.href=u;download.click()},'image/webp')};img.src=out;
+        } else download.click();
+      });
+    } else {
+      status.textContent='Vista previa cargada. Para descargar una URL externa, usa el menú de la imagen si el servidor lo permite.';
+      download.style.display='none';
+    }
+    result.classList.add('show');
+    status.textContent='Vista previa lista · '+document.getElementById('scale').value+' · Ruido: '+document.getElementById('noise').value;
+  });
+  document.getElementById('resetBtn').addEventListener('click',()=>{
+    fileInput.value='';document.getElementById('imageUrl').value='';preview.removeAttribute('src');previewBtn.disabled=true;result.classList.remove('show');download.style.display='inline-block';
+    if(currentUrl && currentUrl.startsWith('blob:'))URL.revokeObjectURL(currentUrl);currentUrl=null;
+  });
+})();
+</script>
+</body></html>
